@@ -18,7 +18,7 @@ def parse_pages(pages_str: str) -> list[int]:
     return pages
 
 
-def extract_pdf_text(pdf_path: str, pages_str: str) -> str:
+def extract_pdf_text(pdf_path: str, pages_str: str = None) -> str:
     try:
         from pypdf import PdfReader
     except ImportError:
@@ -27,7 +27,7 @@ def extract_pdf_text(pdf_path: str, pages_str: str) -> str:
 
     reader = PdfReader(pdf_path)
     total = len(reader.pages)
-    page_numbers = parse_pages(pages_str)
+    page_numbers = parse_pages(pages_str) if pages_str else list(range(1, total + 1))
     texts = []
     for n in page_numbers:
         if n < 1 or n > total:
@@ -42,7 +42,7 @@ def parse_args():
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("--book", help="Nombre del libro (puede ser informal, ej: 'el Paar')")
     group.add_argument("--pdf", help="Ruta al PDF del libro")
-    parser.add_argument("--pages", required=True, help="Páginas leídas (ej: 1-50 o 10,15,20-30)")
+    parser.add_argument("--pages", default=None, help="Páginas leídas (ej: 1-50 o 10,15,20-30). Si no se especifica, usa todo el PDF")
     parser.add_argument("--notes", default="", help="Notas adicionales (opcional)")
     return parser.parse_args()
 
@@ -86,14 +86,16 @@ def main():
     book_name = args.book
 
     if args.pdf:
-        print(f"\nExtrayendo páginas {args.pages} del PDF...")
+        label = f"páginas {args.pages}" if args.pages else "todo el PDF"
+        print(f"\nExtrayendo {label}...")
         pdf_text = extract_pdf_text(args.pdf, args.pages)
         if not pdf_text.strip():
             print("No se pudo extraer texto del PDF.", file=sys.stderr)
             sys.exit(1)
         book_name = args.pdf.split("/")[-1].replace(".pdf", "")
 
-    print(f"Generando posts para: {book_name} (páginas {args.pages})...")
+    pages_label = args.pages or "completo"
+    print(f"Generando posts para: {book_name} (páginas {pages_label})...")
     output = generate_post(book_name, args.pages, args.notes, pdf_text)
 
     if not output:

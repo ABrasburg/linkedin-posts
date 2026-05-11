@@ -1,0 +1,23 @@
+{
+  "default_pages": "1-40",
+  "auto_full_pdf_max_pages": 40,
+  "save_drafts": true,
+  "drafts_dir": "posts/drafts",
+  "max_generation_attempts": 2,
+  "blocked_phrases": [
+    "en estas paginas",
+    "estas paginas",
+    "en las paginas",
+    "en las primeras paginas",
+    "las primeras paginas",
+    "al principio del libro",
+    "en el principio del libro",
+    "en el comienzo del libro",
+    "en este capitulo",
+    "en el capitulo",
+    "el autor dice",
+    "los autores dicen",
+    "el libro dice"
+  ],
+  "default_notes": "Escribir para security engineers, IAM people y backend engineers. Devolver posts listos para publicar: sin introducciones meta, sin sonar a resumen generico y sin repetir el titulo del libro mas de una vez. No usar referencias mecanicas al material leido como \"en estas paginas\", \"en el principio del libro\", \"en las primeras paginas\", \"el autor dice\" o frases parecidas. Entrar directo en la idea. Elegir una idea fuerte de lo leido, abrir con una tesis clara, explicar por que importa y conectarla con problemas reales de seguridad, IAM, AppSec o backend. Cerrar con una pregunta concreta que invite respuestas."
+}

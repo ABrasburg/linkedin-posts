@@ -9,7 +9,7 @@ from pathlib import Path
 
 import requests
 
-WEBHOOK_URL = "https://web.furycloud.io/api/proxy/verdi_flows/webhook/0ebf91dc-ff6f-421b-8cff-7fcf2d0f1e31"
+WEBHOOK_URL_ENV = "LINKEDIN_WEBHOOK_URL"
 DEFAULT_OCR_LANGUAGE = "eng"
 MAX_PDF_TEXT_CHARS = 100000
 DEFAULT_CONFIG = {
@@ -18,6 +18,9 @@ DEFAULT_CONFIG = {
     "save_drafts": True,
     "drafts_dir": "posts/drafts",
     "max_generation_attempts": 2,
+    "target_post_chars": 1100,
+    "max_post_chars": 1400,
+    "max_hashtags": 4,
     "blocked_phrases": [
         "en estas paginas",
         "estas paginas",
@@ -35,7 +38,10 @@ DEFAULT_CONFIG = {
     ],
     "default_notes": (
         "Escribir para security engineers, IAM people y backend engineers. "
-        "Devolver posts listos para publicar. "
+        "Devolver posts listos para publicar y pensados para leer en celular. "
+        "Cada opcion debe tener entre 900 y 1200 caracteres idealmente, "
+        "con maximo 1400 caracteres. Usar parrafos cortos de 1 o 2 lineas, "
+        "una sola idea central y maximo 4 hashtags. "
         "No usar referencias mecanicas al material leido como 'en estas paginas', "
         "'en el principio del libro', 'en las primeras paginas', 'el autor dice' "
         "o frases parecidas. Entrar directo en la idea. "
@@ -59,6 +65,35 @@ def load_config(config_path: str) -> dict:
     config = DEFAULT_CONFIG.copy()
     config.update(loaded)
     return config
+
+
+def load_env_file(env_path: str = ".env"):
+    path = Path(env_path)
+    if not path.exists():
+        return
+
+    for line in path.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+
+        key, value = line.split("=", 1)
+        key = key.strip()
+        value = value.strip().strip('"').strip("'")
+        if key and key not in os.environ:
+            os.environ[key] = value
+
+
+def get_webhook_url() -> str:
+    webhook_url = os.environ.get(WEBHOOK_URL_ENV, "").strip()
+    if webhook_url:
+        return webhook_url
+
+    print(
+        f"Error: configurá {WEBHOOK_URL_ENV} en el entorno o en .env.",
+        file=sys.stderr,
+    )
+    sys.exit(1)
 
 
 def looks_like_pages(value: str) -> bool:
@@ -85,6 +120,37 @@ def find_blocked_phrases(output: str, blocked_phrases: list[str]) -> list[str]:
             matches.append(phrase)
 
     return sorted(set(matches))
+
+
+def split_posts(output: str) -> list[str]:
+    return [part.strip() for part in output.split("---") if part.strip()]
+
+
+def find_output_issues(output: str, config: dict) -> list[str]:
+    issues = []
+    blocked_matches = find_blocked_phrases(output, config.get("blocked_phrases", []))
+    if blocked_matches:
+        issues.append("frases no deseadas: " + ", ".join(blocked_matches))
+
+    max_post_chars = int(config.get("max_post_chars", 0) or 0)
+    max_hashtags = int(config.get("max_hashtags", 0) or 0)
+
+    for index, post in enumerate(split_posts(output), 1):
+        if max_post_chars and len(post) > max_post_chars:
+            issues.append(
+                f"opcion {index} demasiado larga: {len(post)} caracteres "
+                f"(maximo {max_post_chars})"
+            )
+
+        if max_hashtags:
+            hashtags = re.findall(r"(?<!\w)#[^\s#]+", post)
+            if len(hashtags) > max_hashtags:
+                issues.append(
+                    f"opcion {index} tiene {len(hashtags)} hashtags "
+                    f"(maximo {max_hashtags})"
+                )
+
+    return issues
 
 
 def parse_pages(pages_str: str) -> list[int]:
@@ -293,7 +359,7 @@ def generate_post(book: str, pages: str, notes: str, pdf_text: str = "") -> str:
         payload["ocr"] = False
         payload["pdf_text"] = pdf_text[:MAX_PDF_TEXT_CHARS]
     try:
-        response = requests.post(WEBHOOK_URL, json=payload, timeout=120)
+        response = requests.post(get_webhook_url(), json=payload, timeout=120)
         response.raise_for_status()
         data = response.json()
         if isinstance(data, list) and data:
@@ -315,46 +381,45 @@ def generate_post_with_retries(
     config: dict,
 ) -> str:
     max_attempts = max(1, int(config.get("max_generation_attempts", 1)))
-    blocked_phrases = config.get("blocked_phrases", [])
     attempt_notes = notes
 
     for attempt in range(1, max_attempts + 1):
         output = generate_post(book, pages, attempt_notes, pdf_text)
-        matches = find_blocked_phrases(output, blocked_phrases)
+        issues = find_output_issues(output, config)
 
-        if not matches:
+        if not issues:
             return output
 
         if attempt == max_attempts:
             print(
-                "Advertencia: el modelo devolvió frases no deseadas: "
-                + ", ".join(matches),
+                "Advertencia: el modelo devolvió una respuesta fuera de formato: "
+                + "; ".join(issues),
                 file=sys.stderr,
             )
             return output
 
         print(
-            "El modelo devolvió frases no deseadas "
-            f"({', '.join(matches)}). Reintentando...",
+            "El modelo devolvió una respuesta fuera de formato "
+            f"({'; '.join(issues)}). Reintentando...",
             file=sys.stderr,
         )
         attempt_notes = (
             f"{notes}\n\n"
-            "Corrección obligatoria para este intento: la respuesta anterior incluyó "
-            f"estas frases no deseadas: {', '.join(matches)}. "
-            "Reescribí ambas opciones desde cero sin mencionar páginas, capítulo, "
-            "principio del libro, texto leído ni autor. Entrá directo en la idea técnica."
+            "Corrección obligatoria para este intento: la respuesta anterior tuvo "
+            f"estos problemas: {'; '.join(issues)}. "
+            "Reescribí ambas opciones desde cero. Cada opcion debe ser mobile-first, "
+            f"idealmente cerca de {config.get('target_post_chars', 1100)} caracteres "
+            f"y nunca superar {config.get('max_post_chars', 1400)} caracteres. "
+            f"Usá maximo {config.get('max_hashtags', 4)} hashtags. "
+            "No menciones páginas, capítulo, principio del libro, texto leído ni autor. "
+            "Entrá directo en una sola idea técnica."
         )
 
     return output
 
 
 def print_posts(output: str):
-    parts = output.split("---")
-    for i, part in enumerate(parts, 1):
-        post = part.strip()
-        if not post:
-            continue
+    for i, post in enumerate(split_posts(output), 1):
         print(f"\n{'='*60}")
         print(f"  OPCIÓN {i}")
         print(f"{'='*60}\n")
@@ -380,9 +445,9 @@ def main():
     parser.add_argument("--notes", default="", help="Notas adicionales (opcional)")
     parser.add_argument("--ocr-lang", default=DEFAULT_OCR_LANGUAGE, help="Idioma para OCR local en PDFs escaneados")
     parser.add_argument("--config", default="config.json", help="Archivo de configuración")
-    parser.add_argument("--no-save", action="store_true", help="No guardar el draft generado")
     args = parser.parse_args()
 
+    load_env_file()
     config = load_config(args.config)
     resolved = resolve_input(args, parser)
     pages = resolved["pages"]
@@ -434,7 +499,7 @@ def main():
 
     print_posts(output)
 
-    if config.get("save_drafts", True) and not args.no_save:
+    if config.get("save_drafts", True):
         draft_path = save_draft(
             output=output,
             book=book_name,

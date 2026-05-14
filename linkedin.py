@@ -19,8 +19,8 @@ DEFAULT_CONFIG = {
     "drafts_dir": "posts/drafts",
     "max_generation_attempts": 2,
     "target_post_chars": 1100,
-    "max_post_chars": 1400,
-    "max_hashtags": 4,
+    "max_post_chars": 1800,
+    "max_hashtags": 5,
     "blocked_phrases": [
         "en estas paginas",
         "estas paginas",
@@ -39,9 +39,9 @@ DEFAULT_CONFIG = {
     "default_notes": (
         "Escribir para security engineers, IAM people y backend engineers. "
         "Devolver posts listos para publicar y pensados para leer en celular. "
-        "Cada opcion debe tener entre 900 y 1200 caracteres idealmente, "
-        "con maximo 1400 caracteres. Usar parrafos cortos de 1 o 2 lineas, "
-        "una sola idea central y maximo 4 hashtags. "
+        "Cada opcion deberia apuntar a 900-1400 caracteres, sin obsesionarse "
+        "si necesita un poco mas para mantener claridad. Usar parrafos cortos "
+        "de 1 o 2 lineas, una sola idea central y hasta 5 hashtags. "
         "No usar referencias mecanicas al material leido como 'en estas paginas', "
         "'en el principio del libro', 'en las primeras paginas', 'el autor dice' "
         "o frases parecidas. Entrar directo en la idea. "
@@ -259,6 +259,16 @@ def extract_pdf_ocr_text(
 def resolve_input(args, parser):
     pages = args.pages or args.page_range
 
+    if args.topic:
+        if args.pdf or args.book or args.source:
+            parser.error("usá --topic solo, sin PDF, libro ni source posicional.")
+        return {
+            "pdf_path": None,
+            "book_name": args.topic,
+            "pages": pages or "recomendacion semanal",
+            "topic_context": args.context or "",
+        }
+
     if args.pdf and args.book:
         parser.error("usá --pdf o --book, no ambos.")
 
@@ -268,7 +278,7 @@ def resolve_input(args, parser):
                 pages = args.source
             else:
                 parser.error("si usás --pdf, el argumento posicional solo puede ser el rango de páginas.")
-        return {"pdf_path": args.pdf, "book_name": None, "pages": pages}
+        return {"pdf_path": args.pdf, "book_name": None, "pages": pages, "topic_context": ""}
 
     if args.book:
         if args.source:
@@ -276,18 +286,18 @@ def resolve_input(args, parser):
                 pages = args.source
             else:
                 parser.error("si usás --book, el argumento posicional solo puede ser el rango de páginas.")
-        return {"pdf_path": None, "book_name": args.book, "pages": pages}
+        return {"pdf_path": None, "book_name": args.book, "pages": pages, "topic_context": ""}
 
     if not args.source:
         parser.error("pasá un PDF, un nombre de libro, --pdf o --book.")
 
     source_path = Path(args.source).expanduser()
     if source_path.suffix.lower() == ".pdf":
-        return {"pdf_path": str(source_path), "book_name": None, "pages": pages}
+        return {"pdf_path": str(source_path), "book_name": None, "pages": pages, "topic_context": ""}
     if source_path.exists():
         parser.error("el archivo de entrada tiene que ser un PDF.")
 
-    return {"pdf_path": None, "book_name": args.source, "pages": pages}
+    return {"pdf_path": None, "book_name": args.source, "pages": pages, "topic_context": ""}
 
 
 def choose_pages(requested_pages: str, total_pages: int, config: dict) -> str:
@@ -308,6 +318,16 @@ def build_notes(cli_notes: str, config: dict) -> str:
     if default_notes and cli_notes:
         return f"{default_notes}\n\nNotas del usuario:\n{cli_notes}"
     return cli_notes or default_notes
+
+
+def build_topic_text(topic: str, context: str) -> str:
+    parts = [
+        f"Tema recomendado: {topic}",
+        "Usar este contexto como material fuente para generar posts tecnicos.",
+    ]
+    if context.strip():
+        parts.extend(["", context.strip()])
+    return "\n".join(parts)
 
 
 def save_draft(
@@ -408,9 +428,10 @@ def generate_post_with_retries(
             "Corrección obligatoria para este intento: la respuesta anterior tuvo "
             f"estos problemas: {'; '.join(issues)}. "
             "Reescribí ambas opciones desde cero. Cada opcion debe ser mobile-first, "
-            f"idealmente cerca de {config.get('target_post_chars', 1100)} caracteres "
-            f"y nunca superar {config.get('max_post_chars', 1400)} caracteres. "
-            f"Usá maximo {config.get('max_hashtags', 4)} hashtags. "
+            f"idealmente cerca de {config.get('target_post_chars', 1100)} caracteres. "
+            f"No te vayas de {config.get('max_post_chars', 1800)} caracteres salvo que "
+            "sea estrictamente necesario. "
+            f"Usá maximo {config.get('max_hashtags', 5)} hashtags. "
             "No menciones páginas, capítulo, principio del libro, texto leído ni autor. "
             "Entrá directo en una sola idea técnica."
         )
@@ -439,6 +460,8 @@ def main():
     )
     parser.add_argument("source", nargs="?", help="Ruta al PDF o nombre del libro")
     parser.add_argument("page_range", nargs="?", help="Páginas leídas (ej: 1-40 o 10,15,20-30)")
+    parser.add_argument("--topic", help="Tema para generar posts sin PDF")
+    parser.add_argument("--context", default="", help="Contexto fuente para --topic")
     parser.add_argument("--book", help="Nombre del libro (compatibilidad)")
     parser.add_argument("--pdf", help="Ruta al PDF (compatibilidad)")
     parser.add_argument("--pages", default=None, help="Páginas leídas (compatibilidad)")
@@ -455,6 +478,11 @@ def main():
     pdf_text = ""
     source_label = resolved["book_name"] or resolved["pdf_path"] or ""
     book_name = resolved["book_name"]
+    topic_context = resolved.get("topic_context", "")
+
+    if topic_context or args.topic:
+        pdf_text = build_topic_text(book_name, topic_context)
+        source_label = "topic"
 
     if resolved["pdf_path"]:
         pdf_path = resolved["pdf_path"]

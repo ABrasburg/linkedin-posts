@@ -1,0 +1,148 @@
+{
+  "output_dir": "weekly-plans",
+  "progress_reports_dir": "weekly-plans/progress",
+  "top_recommendations": 3,
+  "post_recommendations": 1,
+  "focus_tags": [
+    "iam",
+    "appsec",
+    "offsec",
+    "detection",
+    "programming",
+    "genai"
+  ],
+  "trend_cards": [
+    {
+      "title": "LLM agents y permisos excesivos",
+      "tags": ["genai", "iam", "appsec", "programming"],
+      "trend_score": 95,
+      "why_now": "Las apps con LLMs estan pasando de responder texto a ejecutar acciones con herramientas, APIs y datos internos.",
+      "why_you": "Conecta GenAI con IAM: un agente con demasiados permisos es un problema de identidad y autorizacion, no solo de prompt engineering.",
+      "reading": [
+        "OWASP Top 10 for LLM Applications: prompt injection, excessive agency y sensitive information disclosure",
+        "OWASP MCP Top 10: riesgos de herramientas, contexto y permisos",
+        "Revisar un ejemplo simple de tool calling con permisos minimos"
+      ],
+      "build": "Mini agente en Python con dos tools: una segura y otra sensible. Mostrar como cambia el riesgo segun permisos y validaciones.",
+      "linkedin_angles": [
+        "Prompt injection no es solo un problema de prompts: tambien es un problema de permisos.",
+        "Un agente con permisos de mas se parece mucho a una service account mal gobernada."
+      ],
+      "video": "Clase corta: como modelar permisos minimos para tools de un agente en Python.",
+      "sources": [
+        {
+          "name": "OWASP Top 10 for LLM Applications",
+          "url": "https://owasp.org/www-project-top-10-for-large-language-model-applications/"
+        },
+        {
+          "name": "OWASP MCP Top 10",
+          "url": "https://owasp.org/www-project-mcp-top-10/"
+        }
+      ]
+    },
+    {
+      "title": "Broken Access Control en APIs",
+      "tags": ["iam", "appsec", "offsec", "programming"],
+      "trend_score": 90,
+      "why_now": "Las APIs siguen concentrando logica de negocio, permisos y datos sensibles. Muchos incidentes no son falta de login, sino autorizacion mal modelada.",
+      "why_you": "Es el puente mas directo entre IAM y AppSec: owners, roles, scopes, permisos y validaciones por recurso.",
+      "reading": [
+        "PortSwigger Web Security Academy: access control vulnerabilities",
+        "OWASP API Security Top 10: BOLA/BFLA",
+        "Revisar un caso simple de IDOR con recursos por usuario"
+      ],
+      "build": "Mini API con FastAPI: usuarios, roles y un endpoint vulnerable a IDOR. Despues agregar fix con chequeo de ownership.",
+      "linkedin_angles": [
+        "Autenticacion no es autorizacion: estar logueado no significa poder acceder a cualquier recurso.",
+        "El bug de permisos mas comun aparece cuando el backend confia demasiado en el cliente."
+      ],
+      "video": "Clase: construir una API vulnerable a IDOR y corregirla con validacion de ownership.",
+      "sources": [
+        {
+          "name": "PortSwigger Web Security Academy - Access control",
+          "url": "https://portswigger.net/web-security/access-control"
+        },
+        {
+          "name": "OWASP API Security Project",
+          "url": "https://owasp.org/www-project-api-security/"
+        }
+      ]
+    },
+    {
+      "title": "Detection engineering sobre abuso de identidad",
+      "tags": ["detection", "iam", "security-engineering", "programming"],
+      "trend_score": 88,
+      "why_now": "Stolen credentials, service accounts y cambios de privilegios siguen siendo senales de alto valor para detectar actividad atacante.",
+      "why_you": "Te acerca a roles de Detection Engineering usando tu ventaja actual: identidad, accesos, roles y automatizacion.",
+      "reading": [
+        "Mandiant M-Trends: vectores iniciales y credenciales robadas",
+        "Revisar ejemplos de detecciones sobre cambios de roles, MFA y service accounts",
+        "Mapear logs de IAM a preguntas detectables"
+      ],
+      "build": "Script en Python que lea eventos falsos de IAM y marque cambios sospechosos: alta de privilegios, MFA desactivado, uso de service account dormida.",
+      "linkedin_angles": [
+        "Una buena deteccion de identidad empieza con una pregunta simple: que cambio de permisos no deberia pasar desapercibido.",
+        "Detection engineering no es solo escribir queries: es entender que comportamiento cambia el riesgo."
+      ],
+      "video": "Clase: detecciones simples con Python sobre logs de IAM simulados.",
+      "sources": [
+        {
+          "name": "Google Cloud M-Trends",
+          "url": "https://cloud.google.com/security/resources/m-trends"
+        },
+        {
+          "name": "CISA Known Exploited Vulnerabilities Catalog",
+          "url": "https://www.cisa.gov/known-exploited-vulnerabilities-catalog"
+        }
+      ]
+    },
+    {
+      "title": "ClickFix, phishing e ingenieria social",
+      "tags": ["offsec", "appsec", "iam"],
+      "trend_score": 84,
+      "why_now": "Los equipos ofensivos estan combinando pruebas tecnicas con ingenieria social para medir exposicion real de usuarios y procesos.",
+      "why_you": "Conecta con OffSec y con IAM: muchas fallas terminan en credenciales, aprobaciones o ejecucion de acciones con identidad valida.",
+      "reading": [
+        "Revisar tecnicas de phishing y social engineering en labs autorizados",
+        "Leer sobre controles anti-phishing y MFA resistente a phishing",
+        "Mapear que senales deberia generar una campana ofensiva controlada"
+      ],
+      "build": "Checklist de deteccion y prevencion para campanas internas: eventos esperados, owners, metricas y follow-up.",
+      "linkedin_angles": [
+        "No todo ataque empieza con una vulnerabilidad tecnica: a veces empieza con una accion humana perfectamente autorizada.",
+        "ClickFix muestra por que identidad, endpoint y awareness no pueden tratarse como mundos separados."
+      ],
+      "video": "Clase corta: como pensar una campana de phishing desde controles y detecciones, sin ejecutar ataques reales.",
+      "sources": [
+        {
+          "name": "Referencia interna: oportunidad OffSec / ClickFix",
+          "url": ""
+        }
+      ]
+    },
+    {
+      "title": "Security tooling con Python para AppSec",
+      "tags": ["appsec", "programming", "detection"],
+      "trend_score": 80,
+      "why_now": "Los equipos de seguridad necesitan herramientas internas para escalar revisiones, priorizar hallazgos y bajar friccion a developers.",
+      "why_you": "Combina tu perfil de desarrollo, docencia y seguridad aplicada. Sirve para GitHub, LinkedIn y videos de programacion.",
+      "reading": [
+        "Revisar ejemplos de linters o checks simples de seguridad",
+        "Elegir un problema chico: headers HTTP, secrets en archivos o JWTs mal formados",
+        "Pensar salida clara para developers"
+      ],
+      "build": "CLI en Python que revise headers de seguridad o detecte secretos dummy en archivos locales, con salida explicativa.",
+      "linkedin_angles": [
+        "Una herramienta de seguridad interna sirve si reduce friccion, no si solo genera mas ruido.",
+        "El mejor check de AppSec es el que un developer entiende antes de abrir un ticket."
+      ],
+      "video": "Clase: construir un CLI de seguridad en Python con argparse y salida clara.",
+      "sources": [
+        {
+          "name": "OWASP Cheat Sheet Series",
+          "url": "https://cheatsheetseries.owasp.org/"
+        }
+      ]
+    }
+  ]
+}

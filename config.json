@@ -5,8 +5,8 @@
   "drafts_dir": "posts/drafts",
   "max_generation_attempts": 2,
   "target_post_chars": 1100,
-  "max_post_chars": 1400,
-  "max_hashtags": 4,
+  "max_post_chars": 1800,
+  "max_hashtags": 5,
   "blocked_phrases": [
     "en estas paginas",
     "estas paginas",
@@ -22,5 +22,5 @@
     "los autores dicen",
     "el libro dice"
   ],
-  "default_notes": "Escribir para security engineers, IAM people y backend engineers. Devolver posts listos para publicar y pensados para leer en celular: entre 900 y 1200 caracteres idealmente, nunca mas de 1400 por opcion, parrafos cortos de 1 o 2 lineas, una sola idea central y maximo 4 hashtags. Sin introducciones meta, sin sonar a resumen generico y sin repetir el titulo del libro mas de una vez. No usar referencias mecanicas al material leido como \"en estas paginas\", \"en el principio del libro\", \"en las primeras paginas\", \"el autor dice\" o frases parecidas. Entrar directo en la idea. Elegir una idea fuerte de lo leido, abrir con una tesis clara, explicar por que importa y conectarla con problemas reales de seguridad, IAM, AppSec o backend. Cerrar con una pregunta concreta que invite respuestas."
+  "default_notes": "Escribir para security engineers, IAM people y backend engineers. Devolver posts listos para publicar y pensados para leer en celular: apuntar a 900-1400 caracteres por opcion, sin obsesionarse si necesita un poco mas para mantener claridad, parrafos cortos de 1 o 2 lineas, una sola idea central y hasta 5 hashtags. Sin introducciones meta, sin sonar a resumen generico y sin repetir el titulo del libro mas de una vez. No usar referencias mecanicas al material leido como \"en estas paginas\", \"en el principio del libro\", \"en las primeras paginas\", \"el autor dice\" o frases parecidas. Entrar directo en la idea. Elegir una idea fuerte de lo leido, abrir con una tesis clara, explicar por que importa y conectarla con problemas reales de seguridad, IAM, AppSec o backend. Cerrar con una pregunta concreta que invite respuestas."
 }
